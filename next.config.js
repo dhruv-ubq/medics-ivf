@@ -5,18 +5,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
-
-const rawBase = (process.env.BASE_PATH || process.env.NEXT_PUBLIC_BASE_PATH || "").trim();
-const basePath = rawBase ? (rawBase.startsWith("/") ? rawBase.replace(/\/$/, "") : `/${rawBase.replace(/\/$/, "")}`) : "";
-
 const nextConfig = {
-  ...(basePath ? { basePath } : {}),
-  env: {
-    NEXT_PUBLIC_BASE_PATH: basePath,
-  },
-  optimizeFonts: false,
   images: { unoptimized: true },
-  experimental: { serverComponentsExternalPackages: ["mongodb", "bcryptjs"] },
+  serverExternalPackages: ["mongodb", "bcryptjs"],
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

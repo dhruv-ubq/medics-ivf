@@ -4,19 +4,16 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import Link from "next/link";
 import Icon from "./Icon";
 import { BrandLogo, ClientMark, CertBadge, PersonPhoto } from "./Brandkit";
-import { uid, bannerThemes, clientCategories, badgeKinds, DEFAULTS, SECTION_KEYS, SECTION_LABELS, CmsProvider } from "@/lib/store";
+import { uid, bannerThemes, clientCategories, badgeKinds, DEFAULTS, SECTION_KEYS, SECTION_LABELS, CmsProvider, HERO_PRESETS } from "@/lib/store";
 
-const TABS = [["brand", "Brand logo"], ["clients", "Client logos"], ["integrations", "Integrations"], ["certifications", "Certifications"], ["testimonials", "Testimonials"], ["banners", "Banners"], ["review", "Review and publish"]];
+const TABS = [["hero", "Hero headline"], ["brand", "Brand logo"], ["clients", "Client logos"], ["integrations", "Integrations"], ["certifications", "Certifications"], ["testimonials", "Testimonials"], ["banners", "Banners"], ["review", "Review and publish"]];
 
 const AdminCtx = createContext(null);
 function useItem(key) { return useContext(AdminCtx).data[key] ?? DEFAULTS[key]; }
 
-const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
 async function api(url, opts = {}) {
-  const fullUrl = url.startsWith("/") && base ? `${base}${url}` : url;
-  const r = await fetch(fullUrl, { ...opts, headers: { ...(opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}), ...(opts.headers || {}) } });
-  if (r.status === 401) { window.location.assign(`${base}/admin/login?next=${encodeURIComponent(`${base}/admin`)}`); throw new Error("Signed out"); }
+  const r = await fetch(url, { ...opts, headers: { ...(opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}), ...(opts.headers || {}) } });
+  if (r.status === 401) { window.location.assign("/admin/login?next=/admin"); throw new Error("Signed out"); }
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || "Request failed");
   return j;
@@ -24,6 +21,7 @@ async function api(url, opts = {}) {
 
 // Resize large raster images in the browser, then upload to the media library.
 async function toUploadBlob(file, maxW) {
+  if (file.type.startsWith("video/")) return file;
   if (file.type === "image/svg+xml" || file.type === "image/gif") return file;
   const url = URL.createObjectURL(file);
   try {
@@ -74,7 +72,7 @@ export default function AdminStudio({ user, permissions = [] }) {
     try {
       const fd = new FormData(); fd.append("file", await toUploadBlob(file, maxW));
       const j = await api("/api/admin/media", { method: "POST", body: fd });
-      flash("Image uploaded"); return j.url;
+      flash(file.type.startsWith("video/") ? "Video uploaded" : "Image uploaded"); return j.url;
     } catch (e) { flash(e.message); throw e; }
   }, [flash]);
 
@@ -83,7 +81,7 @@ export default function AdminStudio({ user, permissions = [] }) {
   const busy = Object.values(status).some((v) => v === "saving" || v === "pending");
   const hasError = Object.values(status).includes("error");
   const ctx = { save, flash, upload, reset };
-  const signOut = async () => { await fetch(`${base}/api/auth/logout`, { method: "POST" }); window.location.assign(`${base}/admin/login`); };
+  const signOut = async () => { await fetch("/api/auth/logout", { method: "POST" }); window.location.assign("/admin/login"); };
 
   return (
     <AdminCtx.Provider value={{ data, meta, reload: load, canPublish }}>
@@ -97,14 +95,14 @@ export default function AdminStudio({ user, permissions = [] }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className={`chip ${hasError ? "bg-peach text-orange" : busy ? "bg-sky text-blue" : "bg-mint text-green"}`}>{hasError ? "Save failed" : busy ? "Saving..." : "All changes saved"}</span>
-              <a href={`${base}/api/admin/preview?to=/`} target="_blank" rel="noopener" className="btn-outline px-4 py-2 text-[14px]">Preview draft</a>
+              <a href="/api/admin/preview?to=/" target="_blank" rel="noopener" className="btn-outline px-4 py-2 text-[14px]">Preview draft</a>
               <button onClick={() => setTab("review")} className="btn-dark px-4 py-2 text-[14px]">Review and publish{pending ? ` (${pending})` : ""}</button>
             </div>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3 text-[13px] text-body-muted">
             <span>Signed in as <b className="text-ink">{user?.name || user?.email}</b> · {user?.role}</span>
             <button onClick={signOut} className="font-semibold text-orange">Sign out</button>
-            <a href={base || "/"} className="font-semibold text-ink">View live site</a>
+            <a href="/" className="font-semibold text-ink">View live site</a>
           </div>
 
           <div className="no-scrollbar mt-6 flex gap-1 overflow-x-auto rounded-pill border border-hairline bg-white p-1.5">
@@ -113,6 +111,7 @@ export default function AdminStudio({ user, permissions = [] }) {
 
           <CmsProvider value={data}>
             <div className="mt-6">
+              {tab === "hero" && <HeroTab {...ctx} />}
               {tab === "brand" && <BrandTab {...ctx} />}
               {tab === "clients" && <ListTab {...ctx} storeKey="clients" title="Client logos" hint="PNG or SVG with a transparent background works best. Logos show in the home page marquee and on the Customers page. Without an image, a clean name tile is shown." categories={clientCategories} preview={(x) => <ClientMark item={x} size="sm" />} blank={() => ({ id: uid("c"), name: "New client", category: "clinics", image: "" })} bulk />}
               {tab === "integrations" && <ListTab {...ctx} storeKey="integrations" title="Integration logos" hint="Shown on the home page and Platform page." preview={(x) => x.image ? <img src={x.image} alt="" className="h-12 w-12 object-contain" /> : <span className="font-display text-[13px] font-bold text-ink">{x.name}</span>} blank={() => ({ id: uid("i"), name: "New integration", image: "" })} bulk />}
@@ -148,6 +147,51 @@ function IconBtn({ icon, label, onClick, danger, rot = "" }) {
 }
 function Panel({ children, className = "" }) { return <div className={`rounded-3xl border border-hairline bg-white p-5 md:p-6 ${className}`}>{children}</div>; }
 const move = (arr, i, d) => { const j = i + d; if (j < 0 || j >= arr.length) return arr; const c = [...arr]; [c[i], c[j]] = [c[j], c[i]]; return c; };
+
+/* ---------- Hero ---------- */
+function HeroTab({ save, flash, upload }) {
+  const h = useItem("hero");
+  const set = (p) => save("hero", { ...h, ...p });
+  return (
+    <div className="grid gap-5 lg:grid-cols-[1fr_1fr]">
+      <Panel>
+        <p className="heading-sm">Home page headline</p>
+        <p className="mt-1 text-[14px] text-body-muted">The first thing every visitor reads. Keep the headline short. The highlight line shows in the brand gradient.</p>
+        <div className="mt-5 grid gap-3">
+          <label><span className="lab">Small line above</span><input className="in" maxLength={80} value={h.eyebrow} onChange={(e) => set({ eyebrow: e.target.value })} /></label>
+          <label><span className="lab">Headline</span><input className="in" maxLength={80} value={h.headline} onChange={(e) => set({ headline: e.target.value })} /></label>
+          <label><span className="lab">Highlight (gradient)</span><input className="in" maxLength={80} value={h.highlight} onChange={(e) => set({ highlight: e.target.value })} /></label>
+          <label><span className="lab">Supporting line ({h.subline.length}/260)</span><textarea rows={3} className="in resize-y" maxLength={260} value={h.subline} onChange={(e) => set({ subline: e.target.value })} /></label>
+        </div>
+        <div className="mt-6 rounded-2xl border border-hairline bg-cream p-4">
+          <p className="font-display text-[15px] font-semibold text-ink">Hero video</p>
+          <p className="mt-1 text-[13px] text-body-muted">Shows under the headline instead of the product screens. Upload an MP4 (up to 100 MB, plays muted on loop) or paste a YouTube or Vimeo link. Leave empty to show the product screens.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Upload label={h.video?.startsWith("/api/media/") ? "Replace video" : "Upload MP4"} accept="video/mp4,video/webm" onFile={async (f) => { set({ video: await upload(f) }); }} />
+            <Upload label={h.poster ? "Replace cover image" : "Cover image"} onFile={async (f) => { set({ poster: await upload(f, 1920) }); }} />
+            {(h.video || h.poster) && <button onClick={() => set({ video: "", poster: "" })} className="text-[13px] font-semibold text-orange">Remove video</button>}
+          </div>
+          <label className="mt-3 block"><span className="lab">Or paste a link (https://)</span><input className="in" placeholder="https://www.youtube.com/watch?v=..." value={h.video?.startsWith("/api/media/") ? "" : (h.video || "")} onChange={(e) => set({ video: e.target.value.trim() })} /></label>
+          {h.video && <p className="mt-2 text-[12.5px] font-semibold text-green">Video set. Publish to show it on the site.</p>}
+        </div>
+        <p className="lab mt-6">Presets: trust, scale and compliance</p>
+        <div className="mt-2 grid gap-2">
+          {HERO_PRESETS.map((p) => (
+            <button key={p.headline} onClick={() => { set(p); flash("Preset applied as a draft"); }} className={`rounded-xl border px-4 py-3 text-left transition hover:border-ink ${h.headline === p.headline ? "border-orange bg-peach" : "border-hairline bg-white"}`}>
+              <span className="font-display text-[14.5px] font-semibold text-ink">{p.headline} </span><span className="grad-text font-display text-[14.5px] font-semibold">{p.highlight}</span>
+            </button>
+          ))}
+        </div>
+      </Panel>
+      <Panel className="flex flex-col justify-center overflow-hidden bg-cream">
+        <p className="eyebrow text-body-muted">Preview</p>
+        <p className="mt-4 text-[13px] font-semibold text-body">{h.eyebrow}</p>
+        <p className="mt-2 font-display text-[34px] font-bold leading-tight tracking-tight text-ink">{h.headline} <span className="text-orange">{h.highlight}</span></p>
+        <p className="mt-3 text-[14.5px] text-body">{h.subline}</p>
+      </Panel>
+    </div>
+  );
+}
 
 /* ---------- Brand ---------- */
 function BrandTab({ save, flash, upload, reset }) {
@@ -351,7 +395,7 @@ function ReviewTab({ flash }) {
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><p className="heading-sm">Review and publish</p><p className="mt-1 max-w-xl text-[14px] text-body-muted">Drafts are private. Publishing makes the selected sections live for every visitor within seconds, and saves a version you can roll back to.</p></div>
-          <a href={`${base}/api/admin/preview?to=/`} target="_blank" rel="noopener" className="btn-outline px-4 py-2 text-[13.5px]">Preview draft site</a>
+          <a href="/api/admin/preview?to=/" target="_blank" rel="noopener" className="btn-outline px-4 py-2 text-[13.5px]">Preview draft site</a>
         </div>
         <div className="mt-5 divide-y divide-hairline overflow-hidden rounded-2xl border border-hairline">
           {SECTION_KEYS.map((k) => { const m = meta[k] || {}; return (

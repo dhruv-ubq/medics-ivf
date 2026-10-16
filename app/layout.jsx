@@ -2,6 +2,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import PreviewBar from "@/components/PreviewBar";
+import { MobileCta } from "@/components/HomeWorld";
 import { draftMode } from "next/headers";
 import { CmsProvider } from "@/lib/cms";
 import { getPublishedContent, getDraftContent } from "@/lib/server/content";
@@ -11,8 +12,8 @@ export const revalidate = 300;
 
 export const metadata = {
   metadataBase: new URL("https://www.medicsivf.in"),
-  title: { default: "medics IVF | The complete IVF platform for clinics, chains and every patient", template: "%s | medics IVF" },
-  description: "medics IVF runs clinical care, the lab, billing, compliance and every centre on one cloud platform, and gives each patient a companion app from first enquiry to follow up. Trusted by 350+ hospitals and clinics.",
+  title: { default: "medics IVF | The trusted IVF platform, proven to scale", template: "%s | medics IVF" },
+  description: "medics IVF runs clinical care, the lab, billing, compliance and every centre on one cloud platform, and gives each patient a companion app from first enquiry to follow up. Trusted by 500+ hospitals and clinics.",
   openGraph: { title: "medics IVF | The complete IVF platform", description: "One platform for your clinic, your chain and every couple you care for.", type: "website" },
 };
 export const viewport = { width: "device-width", initialScale: 1 };
@@ -35,6 +36,7 @@ export default async function RootLayout({ children }) {
           <Nav />
           <main>{children}</main>
           <Footer />
+          <MobileCta />
         </CmsProvider>
       </body>
     </html>

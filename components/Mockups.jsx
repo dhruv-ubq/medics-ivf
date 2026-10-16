@@ -1,17 +1,42 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
 
 /* ================= Frames ================= */
-export function BrowserFrame({ children, url = "app.medicsivf.in", className = "" }) {
+/* Renders product screens at a fixed desktop width and scales them to fit, so they look like real
+   screenshots on every device instead of reflowing and overlapping on small screens. */
+function FitCanvas({ base = 880, mobileBase = 560, children }) {
+  const wrap = useRef(null), inner = useRef(null);
+  const [st, setSt] = useState({ s: 1, w: base, h: null, narrow: false });
+  useEffect(() => {
+    const el = wrap.current, inn = inner.current;
+    if (!el || !inn) return;
+    const measure = () => {
+      const avail = el.clientWidth || base;
+      const narrow = avail < 520, b = narrow ? mobileBase : base;
+      const w = Math.max(b, avail), s = Math.min(1, avail / b);
+      setSt({ s, w, h: inn.offsetHeight * s, narrow });
+    };
+    measure();
+    const ro = new ResizeObserver(measure); ro.observe(el); ro.observe(inn);
+    return () => ro.disconnect();
+  }, [base]);
   return (
-    <div className={`overflow-hidden rounded-2xl border border-hairline bg-white shadow-float ${className}`}>
-      <div className="flex items-center gap-2 border-b border-hairline bg-[#f7f6fb] px-4 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" /><span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" /><span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        <span className="ml-3 flex flex-1 items-center gap-1.5 truncate rounded-md bg-white px-3 py-1 text-[11px] text-body-muted"><Icon name="lock" size={11} />{url}</span>
+    <div ref={wrap} className="relative w-full overflow-hidden" style={{ height: st.h ?? undefined }}>
+      <div ref={inner} style={{ width: st.w, transform: `scale(${st.s})`, transformOrigin: "top left" }}>{st.narrow && isValidElement(children) ? cloneElement(children, { compact: true }) : children}</div>
+    </div>
+  );
+}
+
+export function BrowserFrame({ children, url = "app.medicsivf.in", className = "", base = 880 }) {
+  return (
+    <div className={`overflow-hidden rounded-2xl border border-hairline bg-white text-body shadow-float ${className}`}>
+      <div className="flex items-center gap-2 border-b border-hairline bg-[#f7f6fb] px-3 py-2 sm:px-4 sm:py-2.5">
+        <span className="h-2 w-2 rounded-full bg-[#ff5f57] sm:h-2.5 sm:w-2.5" /><span className="h-2 w-2 rounded-full bg-[#febc2e] sm:h-2.5 sm:w-2.5" /><span className="h-2 w-2 rounded-full bg-[#28c840] sm:h-2.5 sm:w-2.5" />
+        <span className="ml-2 flex min-w-0 flex-1 items-center gap-1.5 truncate rounded-md bg-white px-3 py-1 text-[10.5px] text-body-muted sm:ml-3 sm:text-[11px]"><Icon name="lock" size={11} />{url}</span>
       </div>
-      {children}
+      <FitCanvas base={base}>{children}</FitCanvas>
     </div>
   );
 }
@@ -22,7 +47,7 @@ export function PhoneFrame({ children, className = "", scale = 1 }) {
       <div className="absolute left-0 top-0 origin-top-left" style={{ transform: `scale(${scale})` }}>
         <div className="relative w-[272px] rounded-[44px] bg-[#16192b] p-[9px] shadow-float ring-1 ring-black/10">
           <div className="absolute -left-[3px] top-28 h-12 w-[3px] rounded-l bg-[#16192b]" /><div className="absolute -right-[3px] top-24 h-16 w-[3px] rounded-r bg-[#16192b]" />
-          <div className="relative h-[542px] overflow-hidden rounded-[36px] bg-[#f5f8fc]">
+          <div className="relative h-[542px] overflow-hidden rounded-[36px] bg-[#f5f8fc] text-body">
             <div className="absolute left-1/2 top-2.5 z-30 h-[20px] w-[80px] -translate-x-1/2 rounded-full bg-[#16192b]" />
             <div className="relative z-20 flex items-center justify-between bg-white px-6 pt-3 text-[10px] font-semibold text-ink"><span>9:41</span><span className="flex items-center gap-1"><span className="flex h-2 items-end gap-[1.5px]">{[3, 5, 7, 9].map((h) => <i key={h} className="w-[2px] rounded bg-ink" style={{ height: h * 0.9 }} />)}</span><span className="ml-1 h-2.5 w-5 rounded-[3px] border border-ink p-[1px]"><span className="block h-full w-3/4 rounded-[1px] bg-ink" /></span></span></div>
             {children}
@@ -49,7 +74,7 @@ const Pill = ({ tone = "mint", children }) => {
 };
 
 /* ================= medics IVF v9 clinic shell ================= */
-const navItems = [["Worklist", "records"], ["Appointments", "calendar"], ["IVF", "heart"], ["EMR", "stethoscope"], ["Embryology", "lab"], ["Billing", "billing"], ["Pharmacy", "desk"], ["Inventory", "building"], ["Analytics", "chart"]];
+const navItems = [["Worklist", "records"], ["Appointments", "calendar"], ["Counselling", "users"], ["IVF", "heart"], ["EMR", "stethoscope"], ["Embryology", "lab"], ["Billing", "billing"], ["Pharmacy", "desk"], ["Inventory", "building"], ["Analytics", "chart"]];
 
 export function ClinicShell({ active = "Worklist", children, compact = false }) {
   return (
@@ -99,6 +124,48 @@ export function DashboardScreen({ compact = false }) {
           <div className="mt-2 space-y-1">{bars.map(([n, v]) => <div key={n} className="flex items-center gap-2"><span className="w-12 text-body-muted">{n}</span><span className="h-2 flex-1 overflow-hidden rounded-full bg-[#f1f0f7]"><span className="block h-full rounded-full bg-brand-gradient" style={{ width: v + "%" }} /></span><b className="w-7 text-right text-ink">{v}%</b></div>)}</div>
         </div>
       </div>
+    </ClinicShell>
+  );
+}
+
+export function CounsellingScreen({ compact = false }) {
+  const stages = [["Enquiry", true], ["First consult", true], ["Counselling", true], ["Package chosen", false], ["Cycle started", false]];
+  return (
+    <ClinicShell active="Counselling" compact={compact}>
+      <div className="flex items-center justify-between"><div><p className="font-display text-[13px] font-semibold text-ink">Counselling · Ananya R. + Rohit R.</p><p className="text-body-muted">UHID 2291 · Counsellor: Priya S.</p></div><Pill tone="peach">Decision due Fri</Pill></div>
+      <div className="mt-2.5 flex items-center gap-1">{stages.map(([l, d], k) => <div key={l} className="flex flex-1 items-center gap-1"><span className={`grid h-4 w-4 shrink-0 place-items-center rounded-full text-[8px] font-bold ${d ? "bg-green text-white" : "border border-line-strong text-body-muted"}`}>{d ? "✓" : k + 1}</span><span className={`truncate ${d ? "font-semibold text-ink" : "text-body-muted"}`}>{l}</span></div>)}</div>
+      <div className="mt-2.5 grid grid-cols-[1.15fr_1fr] gap-2">
+        <div className="rounded-xl border border-hairline p-2.5">
+          <p className="font-semibold text-ink">Packages discussed</p>
+          {[["IVF with ICSI", "₹1,75,750", true], ["IVF standard", "₹1,42,000", false], ["Egg freezing", "₹95,000", false]].map(([n, v, sel]) => <div key={n} className={`mt-1.5 flex items-center justify-between rounded-lg px-2 py-1.5 ${sel ? "bg-peach" : "bg-[#f7f6fb]"}`}><span className={sel ? "font-semibold text-ink" : ""}>{n}</span><b className="text-ink">{v}</b></div>)}
+          <p className="mt-2 text-body-muted">Inclusions, payment plan and EMI options explained</p>
+        </div>
+        <div className="space-y-1.5">
+          <div className="rounded-xl border border-hairline p-2.5"><p className="font-semibold text-ink">Consent</p><p className="mt-1 flex items-center gap-1 text-green"><Icon name="check" size={11} strokeWidth={3} />IVF consent explained</p><p className="flex items-center gap-1 text-orange"><Icon name="clock" size={11} />Signature pending</p></div>
+          <div className="rounded-xl border border-hairline p-2.5"><p className="font-semibold text-ink">Next follow up</p><p className="mt-1 text-body-muted">Call · Thu 11:00</p><p className="text-body-muted">WhatsApp reminder set</p></div>
+        </div>
+      </div>
+    </ClinicShell>
+  );
+}
+
+export function AiEmrScreen({ compact = false }) {
+  return (
+    <ClinicShell active="EMR" compact={compact}>
+      <div className="flex items-center justify-between"><div><p className="font-display text-[13px] font-semibold text-ink">Ananya R. · 34 y · IVF cycle 2</p><p className="text-body-muted">Consult · Dr. Nair · 10:30 AM</p></div><span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-orange to-purple px-2 py-0.5 text-[9.5px] font-semibold text-white"><Icon name="spark" size={10} />AI summary</span></div>
+      <div className="mt-2.5 rounded-xl border border-[#e9dcff] bg-gradient-to-br from-[#fbf7ff] to-white p-2.5">
+        <p className="flex items-center gap-1 font-semibold text-purple"><Icon name="spark" size={11} />Summary of 14 past visits, 3 cycles and 22 reports</p>
+        <ul className="mt-1.5 space-y-1 text-ink">
+          <li>• Cycle 1: 9 oocytes, 2 blastocysts, ET negative</li>
+          <li>• AMH 1.8 (falling from 2.4 in 2024)</li>
+          <li>• Responds best to antagonist protocol</li>
+          <li>• Partner: semen analysis normal, Aug 2025</li>
+        </ul>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-1.5">
+        {[["Assessment time", "2 min"], ["Records read", "39"], ["Flags", "1 allergy"]].map(([k, v]) => <div key={k} className="rounded-xl border border-hairline p-2"><p className="text-body-muted">{k}</p><p className="font-display text-[14px] font-bold text-ink">{v}</p></div>)}
+      </div>
+      <div className="mt-2 rounded-xl border border-hairline p-2.5"><p className="font-semibold text-ink">Plan</p><p className="text-body-muted">Antagonist protocol · Gonal-F 225 IU · scan in 2 days · sent to the patient app</p></div>
     </ClinicShell>
   );
 }
@@ -169,19 +236,19 @@ export function EmbryoScreen({ compact = false }) {
 }
 
 export function BillingScreen({ compact = false }) {
-  const inc = [["Consultation and baseline tests", true], ["Stimulation monitoring", true], ["OPU and ICSI", true], ["Embryo transfer", false], ["Vitrification, 1 year", false]];
+  const inc = [["Consultation and baseline tests", true], ["Stimulation monitoring scans", true], ["OPU and ICSI", true], ["Embryo transfer", true], ["Vitrification, 1 year", false]];
   return (
     <ClinicShell active="Billing" compact={compact}>
-      <div className="flex items-center justify-between"><p className="font-display text-[13px] font-semibold text-ink">Create bill · Package</p><span className="text-body-muted">UHID 2291</span></div>
+      <div className="flex items-center justify-between"><p className="font-display text-[13px] font-semibold text-ink">Create bill · Package</p><span className="text-body-muted">UHID 2291 · Ananya R.</span></div>
       <div className="mt-2 rounded-xl border border-hairline p-2.5">
         <p className="flex justify-between font-semibold text-ink">IVF-ICSI package <span>₹1,85,000</span></p>
-        <div className="mt-1.5 space-y-1">{inc.map(([n, d]) => <p key={n} className="flex items-center gap-1.5"><span className={`grid h-3.5 w-3.5 place-items-center rounded ${d ? "bg-green text-white" : "border border-line-strong"}`}>{d && <Icon name="check" size={9} strokeWidth={3} />}</span><span className={d ? "text-ink" : "text-body-muted"}>{n}</span>{d && <span className="ml-auto text-[9.5px] text-green">Billed</span>}</p>)}</div>
+        <div className="mt-1.5 space-y-1">{inc.map(([n, d]) => <p key={n} className="flex items-center gap-1.5"><span className={`grid h-3.5 w-3.5 place-items-center rounded ${d ? "bg-green text-white" : "border border-line-strong"}`}>{d && <Icon name="check" size={9} strokeWidth={3} />}</span><span className={d ? "text-ink" : "text-body-muted"}>{n}</span><span className={`ml-auto text-[9.5px] ${d ? "text-green" : "text-body-muted"}`}>{d ? "Included" : "Not selected"}</span></p>)}</div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
-        <div className="rounded-lg border border-hairline p-2"><p className="text-body-muted">Discount category</p><p className="font-semibold text-ink">Corporate · 5%</p><p className="text-[9.5px] text-green">Within your limit</p></div>
-        <div className="rounded-lg border border-hairline p-2"><p className="text-body-muted">Advance</p><p className="font-semibold text-ink">₹50,000 adjusted</p><p className="text-[9.5px] text-body-muted">Receipt R-8812</p></div>
+        <div className="rounded-lg border border-hairline p-2"><p className="text-body-muted">Discount · category</p><p className="font-semibold text-ink">Corporate · 5% (₹9,250)</p><p className="text-[9.5px] text-green">Within your discount limit</p></div>
+        <div className="rounded-lg border border-hairline p-2"><p className="text-body-muted">Advance on record</p><p className="font-semibold text-ink">₹50,000</p><p className="text-[9.5px] text-body-muted">Receipt R-8812</p></div>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5">{["UPI", "Card", "Cash", "App link"].map((m, k) => <span key={m} className={`rounded-md px-2 py-1 ${k === 3 ? "bg-ink font-semibold text-white" : "border border-hairline text-body"}`}>{m}</span>)}<span className="ml-auto font-display text-[13px] font-bold text-ink">₹85,500</span></div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5"><span className="text-body-muted">Payment mode</span>{["Cash", "Card", "UPI"].map((m, k) => <span key={m} className={`rounded-md px-2 py-1 ${k === 2 ? "bg-ink font-semibold text-white" : "border border-hairline text-body"}`}>{m}</span>)}<span className="ml-auto font-display text-[13px] font-bold text-ink">₹1,75,750</span></div>
     </ClinicShell>
   );
 }
@@ -189,13 +256,27 @@ export function BillingScreen({ compact = false }) {
 export function StockScreen({ compact = false }) {
   return (
     <ClinicShell active="Inventory" compact={compact}>
-      <div className="flex items-center justify-between"><p className="font-display text-[13px] font-semibold text-ink">Stock and indents</p><Pill tone="peach">2 reorder alerts</Pill></div>
+      <div className="flex items-center justify-between"><p className="font-display text-[13px] font-semibold text-ink">Indents and stock</p><Pill tone="peach">2 indents to approve</Pill></div>
       <div className="mt-2 overflow-hidden rounded-xl border border-hairline">
-        {[["Gonal-F 75 IU", "Pharmacy", "18", "peach", "Reorder"], ["Cetrotide 0.25 mg", "Pharmacy", "42", "mint", "OK"], ["Culture media", "Embryo lab", "6", "peach", "Indent raised"], ["Vitrification kit", "Embryo lab", "14", "mint", "OK"]].map(([n, s, q, t, st], k) => (
+        {[["Gonal-F 75 IU", "Pharmacy", "20", "peach", "To approve"], ["Culture media", "Embryo lab", "6", "peach", "To approve"], ["Cetrotide 0.25 mg", "Pharmacy", "40", "sky", "Issued"], ["Vitrification kit", "Embryo lab", "10", "mint", "Accepted"]].map(([n, s, q, t, st], k) => (
           <div key={n} className={`grid grid-cols-[1.6fr_1.1fr_0.5fr_1.1fr] items-center gap-1 px-2.5 py-1.5 ${k ? "border-t border-hairline" : ""}`}><b className="truncate text-ink">{n}</b><span className="truncate text-body-muted">{s}</span><span className="text-ink">{q}</span><span><Pill tone={t}>{st}</Pill></span></div>
         ))}
       </div>
-      <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">{[["PO", "Approved"], ["GRN", "Matched"], ["GST report", "Ready"]].map(([a, b]) => <div key={a} className="rounded-lg bg-[#faf9fd] py-1.5"><p className="text-body-muted">{a}</p><p className="font-semibold text-ink">{b}</p></div>)}</div>
+      <div className="mt-2 grid grid-cols-3 gap-1.5 text-center">{[["PO", "Sent to supplier"], ["GRN", "Checklist done"], ["Stock ledger", "Export"]].map(([a, b]) => <div key={a} className="rounded-lg bg-[#faf9fd] py-1.5"><p className="text-body-muted">{a}</p><p className="font-semibold text-ink">{b}</p></div>)}</div>
+    </ClinicShell>
+  );
+}
+
+export function VitrificationScreen({ compact = false }) {
+  const rows = [["VC-2291", "Ananya R. + Rohit R.", "2 embryos · C2-14, C2-15", "12 Aug 2027", "mint", "Active"], ["VC-1874", "Sana K.", "3 embryos · C1-08", "30 Oct 2026", "peach", "Renewal due"], ["VC-1702", "Meera P.", "Oocytes · 8 · C3-02", "18 Mar 2027", "mint", "Active"], ["VC-1520", "Arjun T.", "Semen · 2 straws · S-11", "02 Jan 2026", "gray", "Expired"]];
+  return (
+    <ClinicShell active="Embryology" compact={compact}>
+      <div className="flex items-center justify-between"><p className="font-display text-[13px] font-semibold text-ink">Vitrification contracts</p><Pill tone="peach">1 renewal due</Pill></div>
+      <div className="mt-2 overflow-hidden rounded-xl border border-hairline">
+        <div className="grid grid-cols-[0.8fr_1.4fr_1.6fr_1fr_1fr] gap-1 bg-[#faf9fd] px-2.5 py-1.5 font-semibold text-body-muted"><span>Contract</span><span>Patient</span><span>Stored</span><span>Valid till</span><span>Status</span></div>
+        {rows.map((r) => <div key={r[0]} className="grid grid-cols-[0.8fr_1.4fr_1.6fr_1fr_1fr] items-center gap-1 border-t border-hairline px-2.5 py-1.5"><b className="text-ink">{r[0]}</b><span className="truncate text-ink">{r[1]}</span><span className="truncate text-body-muted">{r[2]}</span><span className="text-ink">{r[3]}</span><span><Pill tone={r[4]}>{r[5]}</Pill></span></div>)}
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-1.5"><div className="rounded-lg border border-hairline p-2"><p className="text-body-muted">VC-1874 freezing fee renewal</p><p className="font-semibold text-ink">1 year · bill on renewal</p></div><div className="rounded-lg border border-hairline p-2"><p className="text-body-muted">Patient</p><p className="flex items-center gap-1 font-semibold text-ink"><Icon name="phone" size={11} className="text-orange" />Contract shared on medics care</p></div></div>
     </ClinicShell>
   );
 }
@@ -339,11 +420,11 @@ export function AppBill() {
         </div>
         <div className="mt-2 overflow-hidden rounded-2xl border border-[#e8edf5] bg-white">
           <div className="flex justify-between bg-[#1a3f8f] px-3 py-1.5 text-[9.5px] font-semibold text-white"><span>DESCRIPTION</span><span>AMOUNT</span></div>
-          {[["IVF-ICSI package, stage 2", "₹85,500"], ["Pharmacy, stimulation", "₹14,200"]].map(([a, b]) => <p key={a} className="flex justify-between border-t border-[#e8edf5] px-3 py-1.5"><span className="text-ink">{a}</span><b className="text-ink">{b}</b></p>)}
-          <p className="flex justify-between border-t border-[#e8edf5] px-3 py-1.5"><span className="text-body-muted">Paid</span><span className="text-green">₹50,000</span></p>
-          <p className="flex justify-between border-t border-[#e8edf5] px-3 py-2 font-bold text-ink"><span>Due now</span><span>₹49,700</span></p>
+          {[["IVF-ICSI package", "₹1,75,750"], ["Pharmacy, retail bill", "₹14,200"]].map(([a, b]) => <p key={a} className="flex justify-between border-t border-[#e8edf5] px-3 py-1.5"><span className="text-ink">{a}</span><b className="text-ink">{b}</b></p>)}
+          <p className="flex justify-between border-t border-[#e8edf5] px-3 py-1.5"><span className="text-body-muted">Advance paid</span><span className="text-green">₹50,000</span></p>
+          <p className="flex justify-between border-t border-[#e8edf5] px-3 py-2 font-bold text-ink"><span>Due now</span><span>₹1,39,950</span></p>
         </div>
-        <div className="mt-2.5 rounded-xl bg-orange py-2.5 text-center font-semibold text-white">Pay ₹49,700 with UPI</div>
+        <div className="mt-2.5 rounded-xl bg-orange py-2.5 text-center font-semibold text-white">Pay ₹1,39,950</div>
       </div>
       <AppTabs />
     </div>

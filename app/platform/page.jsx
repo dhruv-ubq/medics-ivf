@@ -12,7 +12,7 @@ const shot = { "clinical-lab": "emr", operations: "billing", "patient-engagement
 export default function Platform() {
   return (
     <>
-      <PageHero eyebrow="The medics IVF platform" title="One record. One login. Every part of the fertility business." body="medics IVF v9 connects the consult room, the lab, the counter, the store room, the patient's phone and the owner's dashboard." secondary={{ label: "See medics care", href: "/patient-engagement" }} visual={<Screen k="dashboard" />} />
+      <PageHero eyebrow="The medics IVF platform" title="One record. One login. Every part of the fertility business." body="medics IVF connects the consult room, the lab, the counter, the store room, the patient's phone and the owner's dashboard." secondary={{ label: "See medics care", href: "/patient-engagement" }} visual={<Screen k="dashboard" />} />
       <section className="bg-white section-pad"><div className="container-x"><SectionHead center eyebrow="Four layers" title="Connected, so nothing is entered twice." className="mb-12" /><Reveal><Ecosystem /></Reveal></div></section>
       {layers.map((l, k) => (
         <section key={l.slug} className={`${k % 2 ? "bg-white" : "bg-cream"} py-16 md:py-24`}>

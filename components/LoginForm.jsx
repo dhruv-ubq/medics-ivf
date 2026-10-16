@@ -4,15 +4,13 @@ import { useState } from "react";
 export default function LoginForm({ next = "/admin" }) {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
-  const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
   const submit = async (e) => {
     e.preventDefault(); setErr(""); setBusy(true);
     try {
-      const r = await fetch(`${base}/api/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+      const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setErr(j.error || "Sign in failed"); setBusy(false); return; }
-      const target = next.startsWith(base) ? next : `${base}${next.startsWith("/") ? next : `/${next}`}`;
-      window.location.assign(target);
+      window.location.assign(next);
     } catch { setErr("Network error. Please try again."); setBusy(false); }
   };
   return (

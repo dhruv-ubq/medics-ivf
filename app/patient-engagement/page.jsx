@@ -4,6 +4,7 @@ import { Reveal } from "@/components/Motion";
 import { PhoneFrame, AppHome, AppRecords, WhatsAppThread, AppCheckin, AppBill, FloatChip } from "@/components/Mockups";
 import { AppShowcase, FollowupJourney, WhiteLabelDemo, TestimonialShowcase } from "@/components/Interactive";
 import { SectionHead, CtaBand } from "@/components/Blocks";
+import { CareJourney } from "@/components/HomeWorld";
 import { careJourney, careFeatures, standaloneFails, careDifferent } from "@/lib/content";
 
 export const metadata = { title: "medics care: patient app and engagement", description: "Your clinic's own branded patient app and portal, synced with medics IVF, plus automated follow ups on WhatsApp, SMS, email and push." };
@@ -48,11 +49,8 @@ export default function Engagement() {
 
       <section className="bg-white section-pad">
         <div className="container-x">
-          <SectionHead eyebrow="The patient journey" title="From first sign up to long after treatment." />
-          <div className="relative mt-12 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-            <div className="absolute left-0 right-0 top-6 hidden h-px bg-gradient-to-r from-orange via-purple to-blue lg:block" />
-            {careJourney.map((s, k) => <Reveal key={s.t} delay={k * 80} className="relative"><span className="relative z-10 grid h-12 w-12 place-items-center rounded-full border-4 border-white bg-ink text-white shadow-card"><Icon name={s.i} size={19} /></span><p className="mt-4 font-display text-[16px] font-semibold text-ink">{s.t}</p><p className="mt-1 text-[14px] text-body">{s.b}</p></Reveal>)}
-          </div>
+          <SectionHead center eyebrow="End to end patient journey" title="With the couple at every step of IVF." body="From the first enquiry to family care after treatment, medics care handles every touchpoint and stays synced with medics IVF." className="mb-10 md:mb-12" />
+          <CareJourney />
         </div>
       </section>
 

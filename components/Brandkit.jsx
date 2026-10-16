@@ -28,8 +28,8 @@ function accentFor(name) { let h = 0; for (const c of name) h = (h * 31 + c.char
 
 /* Client logo: uploaded image, else a clean wordmark tile */
 export function ClientMark({ item, size = "md", mono = false }) {
-  const h = size === "sm" ? 30 : 38;
-  if (item.image) return <img src={item.image} alt={item.name} style={{ height: h }} className={`w-auto max-w-[150px] object-contain ${mono ? "opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" : ""}`} />;
+  const h = size === "sm" ? 30 : 42;
+  if (item.image) return <img src={item.image} alt={item.name} loading="lazy" style={{ height: h }} className={`w-auto max-w-[170px] object-contain ${mono ? "opacity-70 grayscale transition hover:opacity-100 hover:grayscale-0" : ""}`} />;
   const a = accentFor(item.name);
   const words = item.name.split(/[ ,]+/).filter(Boolean);
   const initials = (words[0][0] + (words[1] ? words[1][0] : "")).toUpperCase();

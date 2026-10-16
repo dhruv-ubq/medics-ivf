@@ -4,18 +4,11 @@
 //   npm run seed -- --email you@ubq.in --password "S3cure!pass" --name "Mohit"
 //   npm run seed -- --reset-password               (reset the admin's password to the one given)
 //   npm run seed -- --reset-content                (overwrite site content with defaults, as a new version)
-import fs from "node:fs";
+//   npm run seed -- --reset-sections clients,certifications,hero   (reset only these sections, keep the rest)
 import { MongoClient } from "mongodb";
 import bcrypt from "bcryptjs";
 import { ensureIndexes, ROLES } from "../lib/server/indexes.mjs";
 import { DEFAULTS, SECTION_KEYS } from "../lib/defaults.js";
-
-// Load .env automatically if present on disk
-if (fs.existsSync(".env") && typeof process.loadEnvFile === "function") {
-  try {
-    process.loadEnvFile(".env");
-  } catch {}
-}
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(`--${n}`);
@@ -53,18 +46,14 @@ try {
     const set = { role: "admin", active: true, name };
     if (flag("reset-password")) Object.assign(set, { passwordHash: await bcrypt.hash(password, 12), passwordChangedAt: new Date(), failedAttempts: 0 });
     await users.updateOne({ _id: existing._id }, { $set: set, ...(flag("reset-password") ? { $unset: { lockedUntil: "" } } : {}) });
-    if (flag("reset-password")) {
-      console.log(`  = Admin user exists: ${email} (password reset successfully & lockout cleared)`);
-    } else {
-      console.log(`  = Admin user exists: ${email} (password unchanged)`);
-      console.log(`    Note: To update password or clear account lockout, run: npm run seed:reset (or npm run seed -- --reset-password)`);
-    }
+    console.log(`  = Admin user exists: ${email}${flag("reset-password") ? " (password reset)" : " (password unchanged)"}`);
   }
 
   const content = db.collection("content"), versions = db.collection("content_versions");
+  const only = (opt("reset-sections") || "").split(",").map((x) => x.trim()).filter(Boolean);
   for (const key of SECTION_KEYS) {
     const doc = await content.findOne({ key });
-    if (!doc || flag("reset-content")) {
+    if (!doc || flag("reset-content") || only.includes(key)) {
       const version = (doc?.version || 0) + 1;
       await content.updateOne({ key }, { $set: { key, draft: DEFAULTS[key], published: DEFAULTS[key], version, publishedAt: new Date(), publishedBy: "seed", updatedAt: new Date(), updatedBy: "seed" } }, { upsert: true });
       await versions.insertOne({ key, version, data: DEFAULTS[key], publishedAt: new Date(), publishedBy: "seed", note: doc ? "Reset to defaults" : "Initial content" });

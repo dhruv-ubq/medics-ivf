@@ -7,13 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "node scripts/seed.mjs",
-    "seed:reset": "node scripts/seed.mjs --reset-password"
+    "seed": "node --env-file=.env scripts/seed.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "mongodb": "^6.10.0",
-    "next": "^14.2.35",
+    "next": "^16.4.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "server-only": "^0.0.1",
@@ -21,8 +20,8 @@
   },
   "devDependencies": {
     "autoprefixer": "10.4.20",
-    "postcss": "8.4.47",
-    "tailwindcss": "3.4.14"
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.17"
   },
   "engines": {
     "node": ">=20.6"

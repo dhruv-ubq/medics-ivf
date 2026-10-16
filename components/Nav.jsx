@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { BrandLogo } from "./Brandkit";
 import Icon from "./Icon";
 import { navMenus } from "@/lib/content";
@@ -11,6 +12,7 @@ export default function Nav() {
   const [mobile, setMobile] = useState(false);
   const [mOpen, setMOpen] = useState(null);    // mobile accordion
   const [scrolled, setScrolled] = useState(false);
+  const path = usePathname() || "/";
   const closeT = useRef(null);
 
   useEffect(() => {
@@ -24,18 +26,19 @@ export default function Nav() {
   const enter = (i) => { clearTimeout(closeT.current); setOpen(i); };
   const leave = () => { closeT.current = setTimeout(() => setOpen(null), 140); };
 
+  const dark = false;
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-base ${scrolled || open !== null ? "border-b border-hairline bg-white/90 backdrop-blur-md" : "border-b border-transparent bg-cream"}`}>
+    <header className={`sticky top-0 z-50 transition-colors duration-base ${dark ? "border-b border-white/10 bg-[#060d2e]" : scrolled || open !== null || mobile ? "border-b border-hairline bg-white/90 backdrop-blur-md" : "border-b border-transparent bg-cream"}`}>
       <div className="container-x flex h-[72px] items-center gap-8">
         <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="medics IVF home">
-          <BrandLogo />
+          <BrandLogo dark={dark} />
         </Link>
 
         <nav className="hidden flex-1 items-center gap-1 lg:flex" onMouseLeave={leave}>
           {navMenus.map((m, i) => (
             <div key={m.label} className="relative" onMouseEnter={() => m.columns ? enter(i) : setOpen(null)}>
               <Link href={m.href} onClick={() => setOpen(null)} aria-expanded={m.columns ? open === i : undefined}
-                className={`flex items-center gap-1 rounded-pill px-3.5 py-2 font-display text-[14.5px] font-medium transition-colors duration-fast ${open === i ? "bg-lavender text-ink" : "text-body hover:text-ink"}`}>
+                className={`flex items-center gap-1 rounded-pill px-3.5 py-2 font-display text-[14.5px] font-medium transition-colors duration-fast ${open === i ? "bg-lavender text-ink" : dark ? "text-white/80 hover:text-white" : "text-body hover:text-ink"}`}>
                 {m.label}{m.columns && <Icon name="down" size={14} className={`transition-transform duration-base ${open === i ? "rotate-180" : ""}`} />}
               </Link>
               {m.columns && open === i && (
@@ -71,11 +74,11 @@ export default function Nav() {
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 lg:flex">
-          <Link href="/patient-engagement" className="btn px-4 py-2.5 text-[14px] text-ink hover:bg-lavender">medics care</Link>
+          <Link href="/patient-engagement" className={`btn px-4 py-2.5 text-[14px] ${dark ? "text-white hover:bg-white/10" : "text-ink hover:bg-lavender"}`}>medics care</Link>
           <Link href="/demo" className="btn-primary px-5 py-2.5 text-[14px]">Book a demo</Link>
         </div>
 
-        <button type="button" onClick={() => setMobile((v) => !v)} aria-label="Menu" aria-expanded={mobile} className="ml-auto grid h-11 w-11 place-items-center rounded-pill lg:hidden">
+        <button type="button" onClick={() => setMobile((v) => !v)} aria-label="Menu" aria-expanded={mobile} className={`ml-auto grid h-11 w-11 place-items-center rounded-pill lg:hidden ${dark ? "text-white" : "text-ink"}`}>
           <Icon name={mobile ? "x" : "menu"} size={24} />
         </button>
       </div>

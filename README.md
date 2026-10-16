@@ -1,9 +1,29 @@
-# medics IVF website (v5: MongoDB backed)
+# medics IVF website (v7: MongoDB backed)
+
+## What changed in v7
+- New home page built around one brand idea: Trust, Scale, Compliance ("grow without the risk").
+- Dark aurora hero with the product stage tilting flat as you scroll; certification badges in the hero.
+- Hero headline is editable in the content studio (Hero headline tab) with one click presets.
+- Trust / Scale / Compliance / Security bento with live counters and an animated hub and spoke network.
+- "One day at an IVF centre": sticky scroll story (desktop) that becomes a stacked story on mobile.
+- Leaner problems section, gradient proof numbers, medics care orbit, sticky "Book a demo" bar on mobile.
+- Much less text on the home page. Checked at 360, 390, 768, 1024 and 1440 px.
+
+# (v6 notes)
+
+## What changed in v6
+- Hero: "The trusted IVF platform, proven to scale." (v9 badge removed).
+- Problems section: five customer problems (ART Compliance, Consent Management, Vitrification Contract,
+  Data Security, Follow-ups) as always visible cards with scroll in animation. No clicking or auto rotation.
+- Clinical and lab: consent and ART records, vitrification contracts with validity dates and freezing fee renewals.
+- Billing and packages rewritten strictly from the v9 training manual (package inclusions, discount categories
+  in % or ₹, discount and refund limits, advances, receipts, refunds, IP and day care billing, collection reports).
+- All logos (clients, integrations, certifications) scroll in an endless horizontal loop. Certifications sit on white.
 
 Next.js 14 (App Router) with its own backend (route handlers) and MongoDB. Marketing pages are static and
 refresh automatically when content is published. The content studio at `/admin` is protected by sign in.
 
-## 1. Setup (Local)
+## 1. Setup
 
 ```bash
 npm install
@@ -11,22 +31,6 @@ docker compose up -d          # or run your own MongoDB on localhost:27018
 cp .env.example .env          # a ready .env is included for local development
 npm run seed                  # indexes, roles, first admin user, default content
 npm run build && npm start    # or: npm run dev
-```
-
-## 2. Docker Deployment (Using your own MongoDB)
-
-```bash
-# 1. Prepare .env with your MongoDB URI and initial credentials
-cp .env.example .env
-
-# 2. Build and start the container
-docker compose up -d --build
-
-# 3. Run seed inside the container
-docker compose exec app npm run seed
-
-# (If admin exists and you need to reset password / unlock account):
-docker compose exec app npm run seed:reset
 ```
 
 Sign in at **http://localhost:3000/admin/login** with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` from `.env`.

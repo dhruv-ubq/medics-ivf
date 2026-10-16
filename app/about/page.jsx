@@ -2,7 +2,7 @@ import { Reveal } from "@/components/Motion";
 import { CertStrip } from "@/components/Interactive";
 import { PageHero, SectionHead, StatBand, CtaBand } from "@/components/Blocks";
 import { timeline } from "@/lib/content";
-export const metadata = { title: "About", description: "medics IVF is built by UBQ Technologies: 20 years of cloud healthtech, 350+ hospitals and clinics, ISO 27001 certified." };
+export const metadata = { title: "About", description: "medics IVF is built by UBQ Technologies: 20 years of cloud healthtech, 500+ hospitals and clinics, ISO 27001 certified." };
 const beliefs = [["Fertility deserves its own platform.", "IVF is not general medicine and should not run on general medicine's tools."], ["Compliance should be built in.", "The rules protect patients. Following them should be easy."], ["Care continues between visits.", "Couples need their clinic in their pocket, not only at the desk."], ["Technology should feel human.", "Simple, even when it is advanced. That has been UBQ's promise since 2006."]];
 export default function About() {
   return (

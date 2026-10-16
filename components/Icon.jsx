@@ -39,10 +39,10 @@ const P = {
   trash: <><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" /></>,
   phone: <><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M11 18.5h2" /></>,
 };
-export default function Icon({ name, className = "", size = 24, strokeWidth = 1.7 }) {
+export default function Icon({ name, className = "", size = 24, strokeWidth = 1.7, style }) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth={strokeWidth}
-      strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      strokeLinecap="round" strokeLinejoin="round" className={className} style={style} aria-hidden="true">
       {P[name] || P.spark}
     </svg>
   );
